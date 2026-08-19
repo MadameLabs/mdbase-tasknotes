@@ -15,6 +15,7 @@ export async function updateCommand(
     removeTag?: string[];
     addContext?: string[];
     removeContext?: string[];
+    set?: string[];
   },
 ): Promise<void> {
   try {
@@ -36,6 +37,17 @@ export async function updateCommand(
       if (options.due) fields.due = options.due;
       if (options.scheduled) fields.scheduled = options.scheduled;
       if (options.title) fields.title = options.title;
+
+      for (const assignment of options.set ?? []) {
+        const separator = assignment.indexOf("=");
+        if (separator <= 0) throw new Error("invalid_set_assignment");
+        const field = assignment.slice(0, separator).trim();
+        const value = assignment.slice(separator + 1);
+        if (!field || !(field in (read.frontmatter as Record<string, unknown>))) {
+          throw new Error(`unknown_field:${field}`);
+        }
+        fields[field] = value;
+      }
 
       // Handle tag modifications
       if (options.addTag || options.removeTag) {

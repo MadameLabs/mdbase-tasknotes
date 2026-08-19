@@ -99,6 +99,7 @@ program
   .option("--remove-tag <tag>", "Remove a tag", collect, [])
   .option("--add-context <ctx>", "Add a context", collect, [])
   .option("--remove-context <ctx>", "Remove a context", collect, [])
+  .option("--set <field=value>", "Set an existing schema field", collect, [])
   .action((pathOrTitle: string, opts: any) => {
     const parentOpts = program.opts();
     return updateCommand(pathOrTitle, {
@@ -108,6 +109,7 @@ program
       removeTag: opts.removeTag?.length ? opts.removeTag : undefined,
       addContext: opts.addContext?.length ? opts.addContext : undefined,
       removeContext: opts.removeContext?.length ? opts.removeContext : undefined,
+      set: opts.set?.length ? opts.set : undefined,
     });
   });
 
