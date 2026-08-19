@@ -62,10 +62,23 @@ export async function timerStartCommand(
 }
 
 export async function timerStopCommand(
-  options: { path?: string },
+  options: { path?: string; pathOrTitle?: string },
 ): Promise<void> {
   try {
     await withCollection(async (collection, mapping) => {
+      if (options.pathOrTitle) {
+        const taskPath = await resolveTaskPath(collection, options.pathOrTitle, mapping);
+        const read = await collection.read(taskPath);
+        if (read.error) throw new Error(`Failed to read task: ${read.error.message}`);
+        const frontmatter = normalizeFrontmatter(read.frontmatter as Record<string, unknown>, mapping) as TaskFrontmatter;
+        const active = getActiveTimeEntry({ timeEntries: frontmatter.timeEntries });
+        if (!active) throw new Error("timer_not_found");
+        const plan = buildSpecStopTimeTrackingUpdate({ frontmatter, currentTimestamp: new Date().toISOString(), stopTimestamp: new Date().toISOString(), path: taskPath });
+        const updateResult = await collection.update({ path: taskPath, fields: denormalizeFrontmatter(plan.fields, mapping) });
+        if (updateResult.error) throw new Error(`Failed to stop timer: ${updateResult.error.message}`);
+        showSuccess(`Timer stopped for: ${resolveDisplayTitle(frontmatter, mapping, taskPath) || taskPath}`);
+        return;
+      }
       // Find the task with a running timer
       const result = await collection.query({
         types: ["task"],

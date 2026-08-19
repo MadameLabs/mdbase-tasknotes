@@ -176,11 +176,11 @@ timer
   });
 
 timer
-  .command("stop")
+  .command("stop [pathOrTitle]")
   .description("Stop the running timer")
-  .action(() => {
+  .action((pathOrTitle?: string) => {
     const parentOpts = program.opts();
-    return timerStopCommand({ path: parentOpts.path });
+    return timerStopCommand({ path: parentOpts.path, pathOrTitle });
   });
 
 timer
