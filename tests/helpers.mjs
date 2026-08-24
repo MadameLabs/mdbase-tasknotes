@@ -1,7 +1,11 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Absoluto: os testes rodam com cwd na colecao temporaria, onde dist/ nao existe.
+const CLI = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
 
 const ANSI_RE = /\u001b\[[0-9;]*m/g;
 
@@ -14,13 +18,10 @@ export function stripAnsi(text) {
 }
 
 export function runCli(args, opts = {}) {
-  const runDir = makeTempDir('mtn-run-');
-  const stdoutPath = join(runDir, 'stdout.txt');
-  const stderrPath = join(runDir, 'stderr.txt');
-  const shellArgs = args.map(shellQuote).join(' ');
-  const command = `node dist/cli.js ${shellArgs} > ${shellQuote(stdoutPath)} 2> ${shellQuote(stderrPath)}`;
-
-  const result = spawnSync('bash', ['-lc', command], {
+  // Antes isto passava por `bash -lc` com redirecionamento: no Windows os
+  // caminhos com barra invertida viravam nomes literais e o teste criava
+  // diretorios de lixo dentro do repositorio. spawnSync direto e portavel.
+  const result = spawnSync(process.execPath, [CLI, ...args.map(String)], {
     cwd: opts.cwd,
     encoding: 'utf8',
     env: { ...process.env, ...(opts.env || {}) },
@@ -28,11 +29,7 @@ export function runCli(args, opts = {}) {
 
   return {
     status: result.status,
-    stdout: readFileSync(stdoutPath, 'utf8'),
-    stderr: readFileSync(stderrPath, 'utf8'),
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
   };
-}
-
-function shellQuote(value) {
-  return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
