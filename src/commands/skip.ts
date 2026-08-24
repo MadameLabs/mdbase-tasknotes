@@ -28,15 +28,13 @@ async function setSkipState(
       const read = await collection.read(taskPath);
 
       if (read.error) {
-        showError(`Failed to read task: ${read.error.message}`);
-        process.exit(1);
+        throw new Error(`Failed to read task: ${read.error.message}`);
       }
 
       const fm = normalizeFrontmatter(read.frontmatter as Record<string, unknown>, mapping);
       const taskTitle = resolveDisplayTitle(fm, mapping, taskPath) || taskPath;
       if (typeof fm.recurrence !== "string" || fm.recurrence.trim().length === 0) {
-        showError("Skip/unskip is only supported for recurring tasks.");
-        process.exit(1);
+        throw new Error("Skip/unskip is only supported for recurring tasks.");
       }
 
       const targetDate = resolveOperationTargetDate(
@@ -63,8 +61,7 @@ async function setSkipState(
       });
 
       if (result.error) {
-        showError(`Failed to ${options.skip ? "skip" : "unskip"} recurring instance: ${result.error.message}`);
-        process.exit(1);
+        throw new Error(`Failed to ${options.skip ? "skip" : "unskip"} recurring instance: ${result.error.message}`);
       }
 
       const verb = options.skip ? "Skipped" : "Unskipped";
@@ -76,6 +73,8 @@ async function setSkipState(
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
+    // process.exit aqui abortava no Windows (UV_HANDLE_CLOSING) porque a colecao
+    // ainda estava fechando; exitCode deixa o loop drenar e sair com 1 de verdade.
+    process.exitCode = 1;
   }
 }

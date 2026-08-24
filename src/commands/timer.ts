@@ -24,15 +24,13 @@ export async function timerStartCommand(
       const read = await collection.read(taskPath);
 
       if (read.error) {
-        showError(`Failed to read task: ${read.error.message}`);
-        process.exit(1);
+        throw new Error(`Failed to read task: ${read.error.message}`);
       }
 
       const fm = normalizeFrontmatter(read.frontmatter as Record<string, unknown>, mapping);
       const running = getActiveTimeEntry({ timeEntries: fm.timeEntries as TimeEntry[] | undefined });
       if (running) {
-        showError(`Timer already running since ${running.startTime}. Stop it first.`);
-        process.exit(1);
+        throw new Error(`Timer already running since ${running.startTime}. Stop it first.`);
       }
 
       const plan = buildSpecStartTimeTrackingUpdate({
@@ -48,8 +46,7 @@ export async function timerStartCommand(
       });
 
       if (result.error) {
-        showError(`Failed to start timer: ${result.error.message}`);
-        process.exit(1);
+        throw new Error(`Failed to start timer: ${result.error.message}`);
       }
 
       const taskTitle = resolveDisplayTitle(fm, mapping, taskPath) || taskPath;
@@ -57,7 +54,9 @@ export async function timerStartCommand(
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
+    // process.exit aqui abortava no Windows (UV_HANDLE_CLOSING) porque a colecao
+    // ainda estava fechando; exitCode deixa o loop drenar e sair com 1 de verdade.
+    process.exitCode = 1;
   }
 }
 
@@ -101,8 +100,7 @@ export async function timerStopCommand(
       }
 
       if (!found) {
-        showError("No running timer found.");
-        process.exit(1);
+        throw new Error("No running timer found.");
       }
 
       const { task, entryIndex } = found;
@@ -124,8 +122,7 @@ export async function timerStopCommand(
       });
 
       if (updateResult.error) {
-        showError(`Failed to stop timer: ${updateResult.error.message}`);
-        process.exit(1);
+        throw new Error(`Failed to stop timer: ${updateResult.error.message}`);
       }
 
       const taskTitle = resolveDisplayTitle(task.frontmatter, mapping, task.path) || task.path;
@@ -133,7 +130,9 @@ export async function timerStopCommand(
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
+    // process.exit aqui abortava no Windows (UV_HANDLE_CLOSING) porque a colecao
+    // ainda estava fechando; exitCode deixa o loop drenar e sair com 1 de verdade.
+    process.exitCode = 1;
   }
 }
 
@@ -172,7 +171,9 @@ export async function timerStatusCommand(
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
+    // process.exit aqui abortava no Windows (UV_HANDLE_CLOSING) porque a colecao
+    // ainda estava fechando; exitCode deixa o loop drenar e sair com 1 de verdade.
+    process.exitCode = 1;
   }
 }
 
@@ -264,6 +265,8 @@ export async function timerLogCommand(
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
+    // process.exit aqui abortava no Windows (UV_HANDLE_CLOSING) porque a colecao
+    // ainda estava fechando; exitCode deixa o loop drenar e sair com 1 de verdade.
+    process.exitCode = 1;
   }
 }

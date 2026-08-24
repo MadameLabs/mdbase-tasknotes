@@ -88,6 +88,8 @@ export async function statsCommand(
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
+    // process.exit aqui abortava no Windows (UV_HANDLE_CLOSING) porque a colecao
+    // ainda estava fechando; exitCode deixa o loop drenar e sair com 1 de verdade.
+    process.exitCode = 1;
   }
 }

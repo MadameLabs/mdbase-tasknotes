@@ -107,7 +107,7 @@ export async function interactiveCommand(
           }
 
           if (result.error) {
-            showError(`Failed to create task: ${result.error.message}`);
+            throw new Error(`Failed to create task: ${result.error.message}`);
           } else {
             const fm = normalizeFrontmatter(result.frontmatter as Record<string, unknown>, mapping);
             const task: TaskResult = {
@@ -173,6 +173,5 @@ export async function interactiveCommand(
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
   }
 }

@@ -18,13 +18,11 @@ export async function deleteCommand(
           for (const link of result.broken_links) {
             console.log(`  - ${link.path}`);
           }
-          showError("Use --force to delete anyway.");
-          process.exit(1);
+          throw new Error("Use --force to delete anyway.");
         }
 
         if (result.error) {
-          showError(`Failed to delete task: ${result.error.message}`);
-          process.exit(1);
+          throw new Error(`Failed to delete task: ${result.error.message}`);
         }
 
         showSuccess(`Deleted: ${taskPath}`);
@@ -32,8 +30,7 @@ export async function deleteCommand(
         const result = await collection.delete(taskPath);
 
         if (result.error) {
-          showError(`Failed to delete task: ${result.error.message}`);
-          process.exit(1);
+          throw new Error(`Failed to delete task: ${result.error.message}`);
         }
 
         showSuccess(`Deleted: ${taskPath}`);
@@ -41,6 +38,8 @@ export async function deleteCommand(
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
+    // process.exit aqui abortava no Windows (UV_HANDLE_CLOSING) porque a colecao
+    // ainda estava fechando; exitCode deixa o loop drenar e sair com 1 de verdade.
+    process.exitCode = 1;
   }
 }

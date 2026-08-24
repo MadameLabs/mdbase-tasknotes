@@ -24,8 +24,7 @@ export async function updateCommand(
       const read = await collection.read(taskPath);
 
       if (read.error) {
-        showError(`Failed to read task: ${read.error.message}`);
-        process.exit(1);
+        throw new Error(`Failed to read task: ${read.error.message}`);
       }
 
       const fm = normalizeFrontmatter(read.frontmatter as Record<string, unknown>, mapping);
@@ -78,8 +77,7 @@ export async function updateCommand(
       }
 
       if (Object.keys(fields).length === 0) {
-        showError("No fields to update. Use flags like --status, --priority, --due, etc.");
-        process.exit(1);
+        throw new Error("No fields to update. Use flags like --status, --priority, --due, etc.");
       }
 
       const result = await collection.update({
@@ -88,14 +86,13 @@ export async function updateCommand(
       });
 
       if (result.error) {
-        showError(`Failed to update task: ${result.error.message}`);
-        process.exit(1);
+        throw new Error(`Failed to update task: ${result.error.message}`);
       }
 
       showSuccess(`Updated: ${taskTitle}`);
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
-    process.exit(1);
+    process.exitCode = 1;
   }
 }
