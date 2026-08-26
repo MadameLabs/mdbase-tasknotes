@@ -6,6 +6,7 @@ import { listCommand } from "./commands/list.js";
 import { showCommand } from "./commands/show.js";
 import { completeCommand } from "./commands/complete.js";
 import { updateCommand } from "./commands/update.js";
+import { promoteCommand } from "./commands/promote.js";
 import { deleteCommand } from "./commands/delete.js";
 import { archiveCommand } from "./commands/archive.js";
 import { searchCommand } from "./commands/search.js";
@@ -111,6 +112,17 @@ program
       removeContext: opts.removeContext?.length ? opts.removeContext : undefined,
       set: opts.set?.length ? opts.set : undefined,
     });
+  });
+
+program
+  .command("promote <taskPath>")
+  .description("Promote an existing note to a TaskNotes task")
+  .requiredOption("--responsavel <wikilink>", "Task owner wikilink")
+  .requiredOption("--marca <wikilink>", "Brand wikilink")
+  .requiredOption("--projeto <wikilink>", "Project wikilink")
+  .action((taskPath: string, opts: any) => {
+    const parentOpts = program.opts();
+    return promoteCommand(taskPath, { ...opts, path: parentOpts.path });
   });
 
 // Delete

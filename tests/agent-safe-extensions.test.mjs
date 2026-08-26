@@ -3,7 +3,7 @@
 // quando ele ja existe no frontmatter. Sao o Gate B do plano de cutover.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runCli, makeTempDir, stripAnsi } from "./helpers.mjs";
 
@@ -86,6 +86,31 @@ test("update --set refuses an assignment without a field name", () => {
   assert.equal(refused.status, 1);
   assert.match(stripAnsi(refused.stdout + refused.stderr), /invalid_set_assignment/);
   assert.equal(taskFile(path, "Campo"), before);
+});
+
+test("promote turns one exact existing note into a TaskNotes task", () => {
+  const path = makeTempDir("mtn-agent-promote-");
+  assert.equal(runCli(["init", path]).status, 0);
+  mkdirSync(join(path, "01-planejamento"));
+  const notePath = join(path, "01-planejamento", "Plano.md");
+  writeFileSync(notePath, "---\ntype: plano\ntitle: Plano\n---\n");
+
+  const promoted = runCli([
+    "promote", "01-planejamento/Plano.md",
+    "--responsavel", "[[Arthur_Cardoso]]",
+    "--marca", "[[Madame_Labs]]",
+    "--projeto", "[[tasknotes-dual-vault-e-adaptador]]",
+    "--path", path,
+  ]);
+
+  assert.equal(promoted.status, 0, promoted.stdout + promoted.stderr);
+  const note = readFileSync(notePath, "utf8");
+  assert.match(note, /type: plano/);
+  assert.match(note, /tags:\n\s+- task/);
+  assert.match(note, /status: to-do/);
+  assert.match(note, /Responsavel:\n\s+- ['"]?\[\[Arthur_Cardoso\]\]['"]?/);
+  assert.match(note, /Marca:\n\s+- ['"]?\[\[Madame_Labs\]\]['"]?/);
+  assert.match(note, /Projeto:\n\s+- ['"]?\[\[tasknotes-dual-vault-e-adaptador\]\]['"]?/);
 });
 
 test("failures exit with 1 instead of aborting the process on Windows", () => {
