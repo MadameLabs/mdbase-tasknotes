@@ -10,7 +10,7 @@ import {
 } from "@tasknotes/model/time";
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { formatDuration, showError, showSuccess, showInfo } from "../format.js";
-import { normalizeFrontmatter, denormalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
+import { normalizeFrontmatter, denormalizeFrontmatter, resolveDisplayTitle, taskFilter } from "../field-mapping.js";
 import { getCurrentDateString, resolveDateTimeRangeBound } from "../date.js";
 import type { TimeEntry, TaskResult, TaskFrontmatter } from "../types.js";
 
@@ -80,7 +80,7 @@ export async function timerStopCommand(
       }
       // Find the task with a running timer
       const result = await collection.query({
-        types: ["task"],
+        where: taskFilter(mapping),
       });
 
       const rawTasks = (result.results || []) as TaskResult[];
@@ -142,7 +142,7 @@ export async function timerStatusCommand(
   try {
     await withCollection(async (collection, mapping) => {
       const result = await collection.query({
-        types: ["task"],
+        where: taskFilter(mapping),
       });
 
       const rawTasks = (result.results || []) as TaskResult[];
@@ -183,7 +183,7 @@ export async function timerLogCommand(
   try {
     await withCollection(async (collection, mapping) => {
       const result = await collection.query({
-        types: ["task"],
+        where: taskFilter(mapping),
       });
 
       const rawTasks = (result.results || []) as TaskResult[];

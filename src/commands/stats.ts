@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { parseISO, differenceInMinutes } from "date-fns";
 import { withCollection } from "../collection.js";
 import { formatDuration, showError } from "../format.js";
-import { normalizeFrontmatter, isCompletedStatus } from "../field-mapping.js";
+import { normalizeFrontmatter, isCompletedStatus, taskFilter } from "../field-mapping.js";
 import { getCurrentDateString, isBeforeDateSafe } from "../date.js";
 import type { TaskResult, TaskFrontmatter } from "../types.js";
 
@@ -12,7 +12,7 @@ export async function statsCommand(
   try {
     await withCollection(async (collection, mapping) => {
       const result = await collection.query({
-        types: ["task"],
+        where: taskFilter(mapping),
         limit: 1000,
       });
 

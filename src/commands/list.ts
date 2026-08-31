@@ -6,6 +6,7 @@ import {
   resolveDisplayTitle,
   resolveField,
   isCompletedStatus,
+  taskFilter,
 } from "../field-mapping.js";
 import type { TaskResult } from "../types.js";
 import { isBeforeDateSafe, resolveDateOrToday, validateDateString } from "../date.js";
@@ -89,8 +90,7 @@ export async function listCommand(options: {
       const limit = options.limit ? parseInt(options.limit, 10) : 50;
 
       const result = await collection.query({
-        types: ["task"],
-        where,
+        where: where === undefined ? taskFilter(mapping) : { and: [taskFilter(mapping), where] },
         order_by: [{ field: resolveField(mapping, "due"), direction: "asc" }],
         limit,
       });

@@ -139,6 +139,17 @@ export function resolveField(mapping: FieldMapping, role: FieldRole): string {
 	return mapping.roleToField[role];
 }
 
+/**
+ * Uma nota e tarefa por tipo OU por tag. O tipo e o contrato do mdbase; a tag
+ * e como o TaskNotes identifica tarefa quando `taskIdentificationMethod` esta
+ * em "tag", e nesses vaults a nota-tarefa vive fora de tasks/ e carrega o
+ * `type` do seu proprio genero -- plano, design, briefing. Filtrar so por tipo
+ * torna essas notas invisiveis ao CLI.
+ */
+export function taskFilter(mapping: FieldMapping): Record<string, unknown> {
+	return { or: [{ type: { eq: "task" } }, { [resolveField(mapping, "tags")]: { contains: "task" } }] };
+}
+
 export { resolveDisplayTitle };
 
 function isRecord(value: unknown): value is Record<string, unknown> {

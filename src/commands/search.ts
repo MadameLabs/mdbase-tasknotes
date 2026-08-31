@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { withCollection } from "../collection.js";
 import { formatTask, showError } from "../format.js";
 import { extractProjectNames } from "../mapper.js";
-import { normalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
+import { normalizeFrontmatter, resolveDisplayTitle, taskFilter } from "../field-mapping.js";
 import type { TaskResult } from "../types.js";
 
 export async function searchCommand(
@@ -18,7 +18,7 @@ export async function searchCommand(
   try {
     await withCollection(async (collection, mapping) => {
       const result = await collection.query({
-        types: ["task"],
+        where: taskFilter(mapping),
         include_body: true,
         limit: 200,
       });

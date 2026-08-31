@@ -113,6 +113,28 @@ test("promote turns one exact existing note into a TaskNotes task", () => {
   assert.match(note, /Projeto:\n\s+- ['"]?\[\[tasknotes-dual-vault-e-adaptador\]\]['"]?/);
 });
 
+test("a nota promovida e tarefa pela tag, mesmo com type proprio e fora de tasks/", () => {
+  // O vault ENGENHARIA usa taskIdentificationMethod = "tag": a nota-tarefa
+  // vive em 01-planejamento/ e mantem o `type` do seu genero. Filtrar so por
+  // types: ["task"] tornava essas notas invisiveis a todo o CLI -- list nao
+  // mostrava, show nao achava, timer nao encontrava o que cronometrar.
+  const path = makeTempDir("mtn-tag-identifica-");
+  assert.equal(runCli(["init", path]).status, 0);
+  mkdirSync(join(path, "01-planejamento"));
+  writeFileSync(
+    join(path, "01-planejamento", "Plano.md"),
+    "---\ntype: plano\ntitle: Plano\nstatus: to-do\ntags:\n  - task\n---\n",
+  );
+
+  const listed = runCli(["list", "--path", path]);
+  assert.equal(listed.status, 0, listed.stdout + listed.stderr);
+  assert.match(stripAnsi(listed.stdout), /Plano/);
+
+  const shown = runCli(["show", "Plano", "--path", path]);
+  assert.equal(shown.status, 0, shown.stdout + shown.stderr);
+  assert.match(stripAnsi(shown.stdout), /Plano/);
+});
+
 test("failures exit with 1 instead of aborting the process on Windows", () => {
   // process.exit durante o fechamento da colecao abortava com 0xC0000409 e
   // escondia o codigo real de saida de todo caminho de erro.

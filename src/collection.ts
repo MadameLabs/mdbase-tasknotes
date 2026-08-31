@@ -1,7 +1,7 @@
 import { Collection } from "@callumalpass/mdbase";
 import { basename } from "node:path";
 import { resolveCollectionPath } from "./config.js";
-import { type FieldMapping, loadFieldMapping, resolveField } from "./field-mapping.js";
+import { type FieldMapping, loadFieldMapping, resolveField, taskFilter } from "./field-mapping.js";
 
 export async function openCollection(
   flagPath?: string,
@@ -42,7 +42,7 @@ export async function resolveTaskPath(
   const escaped = query.replace(/"/g, '\\"');
 
   // Try exact title match
-  const exact = await queryTasks(collection, `${titleField} == "${escaped}"`, 20);
+  const exact = await queryTasks(collection, mapping, `${titleField} == "${escaped}"`, 20);
 
   if (exact.length === 1) {
     return exact[0].path;
@@ -53,8 +53,8 @@ export async function resolveTaskPath(
 
   // Fallback for filename-based title mode
   const exactBasename = dedupeByPath([
-    ...await queryTasks(collection, `file.basename == "${escaped}"`, 20),
-    ...await queryTasks(collection, `file.name == "${escaped}.md"`, 20),
+    ...await queryTasks(collection, mapping, `file.basename == "${escaped}"`, 20),
+    ...await queryTasks(collection, mapping, `file.name == "${escaped}.md"`, 20),
   ]);
   if (exactBasename.length === 1) {
     return exactBasename[0].path;
@@ -64,10 +64,10 @@ export async function resolveTaskPath(
   }
 
   // Try fuzzy title/basename match
-  const fuzzyTitle = await queryTasks(collection, `${titleField}.contains("${escaped}")`, 20);
+  const fuzzyTitle = await queryTasks(collection, mapping, `${titleField}.contains("${escaped}")`, 20);
   const fuzzyBasename = dedupeByPath([
-    ...await queryTasks(collection, `file.basename.contains("${escaped}")`, 20),
-    ...await queryTasks(collection, `file.name.contains("${escaped}")`, 20),
+    ...await queryTasks(collection, mapping, `file.basename.contains("${escaped}")`, 20),
+    ...await queryTasks(collection, mapping, `file.name.contains("${escaped}")`, 20),
   ]);
   const fuzzy = dedupeByPath([...fuzzyTitle, ...fuzzyBasename]);
 
@@ -95,13 +95,13 @@ interface TaskQueryResult {
 
 async function queryTasks(
   collection: Collection,
+  mapping: FieldMapping,
   where: string,
   limit: number,
 ): Promise<TaskQueryResult[]> {
   try {
     const result = await collection.query({
-      types: ["task"],
-      where,
+      where: { and: [taskFilter(mapping), where] },
       limit,
     });
     return (result.results || []) as TaskQueryResult[];
