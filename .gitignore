@@ -1,5 +1,4 @@
 node_modules/
-dist/
 /.ops
 /_types
 /mdbase.yaml
