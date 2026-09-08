@@ -26,7 +26,6 @@
   },
   "files": [
     "dist",
-    "vendor",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
@@ -40,11 +39,8 @@
     "test:package": "npm run build && node scripts/smoke-package.mjs",
     "prepublishOnly": "tsup"
   },
-  "bundleDependencies": [
-    "@callumalpass/mdbase"
-  ],
   "dependencies": {
-    "@callumalpass/mdbase": "file:vendor/callumalpass-mdbase-0.3.0-rc.4.tgz",
+    "@callumalpass/mdbase": "https://github.com/MadameLabs/mdbase-tasknotes/raw/721ccd1/vendor/callumalpass-mdbase-0.3.0-rc.4.tgz",
     "@tasknotes/model": "0.3.0-rc.5",
     "chalk": "^4.1.2",
     "commander": "^12.1.0",
