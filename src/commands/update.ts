@@ -16,6 +16,8 @@ export async function updateCommand(
     addContext?: string[];
     removeContext?: string[];
     set?: string[];
+    setNew?: string[];
+    setNewList?: string[];
   },
 ): Promise<void> {
   try {
@@ -37,15 +39,40 @@ export async function updateCommand(
       if (options.scheduled) fields.scheduled = options.scheduled;
       if (options.title) fields.title = options.title;
 
-      for (const assignment of options.set ?? []) {
+      // --set e exato de proposito: so escreve o que ja esta no frontmatter,
+      // para uma tarefa errada nunca ganhar campo por engano. Promover uma
+      // nota comum precisa do oposto, e por isso --set-new e uma flag separada
+      // em vez de um relaxamento do guard.
+      const assign = (assignment: string, allowNew: boolean): void => {
         const separator = assignment.indexOf("=");
         if (separator <= 0) throw new Error("invalid_set_assignment");
         const field = assignment.slice(0, separator).trim();
         const value = assignment.slice(separator + 1);
-        if (!field || !(field in (read.frontmatter as Record<string, unknown>))) {
+        if (!field) throw new Error("invalid_set_assignment");
+        if (!allowNew && !(field in (read.frontmatter as Record<string, unknown>))) {
           throw new Error(`unknown_field:${field}`);
         }
         fields[field] = value;
+      };
+
+      for (const assignment of options.set ?? []) assign(assignment, false);
+      for (const assignment of options.setNew ?? []) assign(assignment, true);
+
+      // Campo de lista segue o padrao de --add-tag: a flag monta o array. A
+      // primeira atribuicao substitui o que estava la, e as seguintes do mesmo
+      // campo acumulam, para promover duas vezes nao duplicar o valor.
+      const listed = new Set<string>();
+      for (const assignment of options.setNewList ?? []) {
+        const separator = assignment.indexOf("=");
+        if (separator <= 0) throw new Error("invalid_set_assignment");
+        const field = assignment.slice(0, separator).trim();
+        const value = assignment.slice(separator + 1);
+        if (!field) throw new Error("invalid_set_assignment");
+        if (!listed.has(field)) {
+          listed.add(field);
+          fields[field] = [];
+        }
+        (fields[field] as unknown[]).push(value);
       }
 
       // Handle tag modifications

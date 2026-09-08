@@ -100,6 +100,8 @@ program
   .option("--add-context <ctx>", "Add a context", collect, [])
   .option("--remove-context <ctx>", "Remove a context", collect, [])
   .option("--set <field=value>", "Set an existing schema field", collect, [])
+  .option("--set-new <field=value>", "Set a field, creating it when absent", collect, [])
+  .option("--set-new-list <field=value>", "Set a list field, creating it when absent; repeat for more values", collect, [])
   .action((pathOrTitle: string, opts: any) => {
     const parentOpts = program.opts();
     return updateCommand(pathOrTitle, {
@@ -110,6 +112,8 @@ program
       addContext: opts.addContext?.length ? opts.addContext : undefined,
       removeContext: opts.removeContext?.length ? opts.removeContext : undefined,
       set: opts.set?.length ? opts.set : undefined,
+      setNew: opts.setNew?.length ? opts.setNew : undefined,
+      setNewList: opts.setNewList?.length ? opts.setNewList : undefined,
     });
   });
 
