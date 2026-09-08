@@ -40,6 +40,9 @@
     "test:package": "npm run build && node scripts/smoke-package.mjs",
     "prepare": "tsup"
   },
+  "bundleDependencies": [
+    "@callumalpass/mdbase"
+  ],
   "dependencies": {
     "@callumalpass/mdbase": "file:vendor/callumalpass-mdbase-0.3.0-rc.4.tgz",
     "@tasknotes/model": "0.3.0-rc.5",
