@@ -113,6 +113,39 @@ test("promote turns one exact existing note into a TaskNotes task", () => {
   assert.match(note, /Projeto:\n\s+- ['"]?\[\[tasknotes-dual-vault-e-adaptador\]\]['"]?/);
 });
 
+// O vault real chama o status de `Status`: o contrato mapeia o nome canonico
+// para o do disco. A colecao criada por `init` mapeia status para si mesmo, e
+// por isso o teste acima passava enquanto a nota promovida no ENGENHARIA saia
+// com `status:` minusculo -- invisivel para o TaskNotes, que le `Status:`.
+test("promote escreve o status pelo nome mapeado da colecao", () => {
+  const path = makeTempDir("mtn-agent-promote-map-");
+  assert.equal(runCli(["init", path]).status, 0);
+  const typePath = join(path, "_types", "task.md");
+  // Renomear o campo no tipo inteiro: declaracao, obrigatoriedade e mapeamento.
+  // E o formato do ENGENHARIA, onde o contrato declara `Status` e mapeia
+  // `status` para ele.
+  writeFileSync(typePath, readFileSync(typePath, "utf8")
+    .replace("      status:\n        enum:", "      Status:\n        enum:")
+    .replace("      - status\n", "      - Status\n")
+    .replace("      status: status\n", "      status: Status\n"));
+  mkdirSync(join(path, "01-planejamento"));
+  const notePath = join(path, "01-planejamento", "Plano.md");
+  writeFileSync(notePath, "---\ntype: plano\ntitle: Plano\n---\n");
+
+  const promoted = runCli([
+    "promote", "01-planejamento/Plano.md",
+    "--responsavel", "[[Arthur_Cardoso]]",
+    "--marca", "[[Madame_Labs]]",
+    "--projeto", "[[projeto-x]]",
+    "--path", path,
+  ]);
+
+  assert.equal(promoted.status, 0, promoted.stdout + promoted.stderr);
+  const note = readFileSync(notePath, "utf8");
+  assert.match(note, /Status: to-do/);
+  assert.doesNotMatch(note, /^status:/m);
+});
+
 test("a nota promovida e tarefa pela tag, mesmo com type proprio e fora de tasks/", () => {
   // O vault ENGENHARIA usa taskIdentificationMethod = "tag": a nota-tarefa
   // vive em 01-planejamento/ e mantem o `type` do seu genero. Filtrar so por
